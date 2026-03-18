@@ -11,8 +11,6 @@ class LLMConfig:
     model: str
     temperature: float
     top_p: float
-    max_tokens: int
-    max_output_chars: int
     api_base: str 
     api_key_env: str
     context_length: int
@@ -199,7 +197,7 @@ def build_llm_client(config: dict | None = None, preset_name: str | None = None)
     return LLMClient(llm_config)
 
 if __name__ == "__main__":
-    llm_client = build_llm_client(preset_name="ollama_qwen3_4b")
+    llm_client = build_llm_client(preset_name="ollama_qwen3_8b")
     # prompt_text = llm_client._build_prompt("你是谁？", "")
     user_prompt = """
     问题：你是谁？
