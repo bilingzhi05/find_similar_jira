@@ -5,3 +5,4 @@ langchain
 langchain_ollama
 fastapi
 uvicorn
+scikit-learn

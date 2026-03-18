@@ -48,4 +48,4 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
-# cd /home/bj17300-049u/work/find_similar_jira && /home/bj17300-049u/work/find_similar_jira/311venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000
+# cd /home/amlogic/FAE/AutoLog/lingzhi.bi/find_similar_jira && nohup /home/amlogic/FAE/AutoLog/lingzhi.bi/find_similar_jira/310venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8801 &
