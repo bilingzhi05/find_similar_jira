@@ -215,6 +215,8 @@ def summarize_comments_to_max_token(
     previous_tokens: int | None = None
     while True:
         batches = build_batches(current_items)
+        if len(batches) == 1:
+            return "\n".join(batches[0])
         summaries: list[str] = []
         for batch in batches:
             text = "\n".join(batch)

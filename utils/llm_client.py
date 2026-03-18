@@ -3,19 +3,19 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
-
+from utils.logger import log as mylog
 
 @dataclass
 class LLMConfig:
-    provider: str = "ollama"
-    model: str = "qwen3:4b-instruct-2507-fp16"
-    temperature: float = 0.1
-    top_p: float = 0.3
-    max_tokens: int = 512
-    max_output_chars: int = 600
-    api_base: str | None = "http://10.58.11.60:11434"
-    api_key_env: str = "OPENAI_API_KEY"
-    context_length: int = 4096
+    provider: str
+    model: str
+    temperature: float
+    top_p: float
+    max_tokens: int
+    max_output_chars: int
+    api_base: str 
+    api_key_env: str
+    context_length: int
 
 
 class LLMClient:
@@ -32,8 +32,11 @@ class LLMClient:
 
     def qa_with_system(self, system_prompt: str, user_prompt: str) -> str:
         llm = self._get_llm()
+        mylog(f"llm:{llm}")
         messages = self._build_messages(system_prompt, user_prompt)
+        mylog(f"messages:{messages}")
         result = llm.invoke(messages)
+        mylog(f"result:{result}")
         if hasattr(result, "content"):
             return (result.content or "").strip()
         return str(result).strip()
@@ -130,7 +133,7 @@ class LLMClient:
 
 
 LLM_PRESETS = {
-    "ollama_qwen3_4b": {
+    "ollama_qwen3_4b_fp16": {
         "provider": "ollama",
         "model": "qwen3:4b-instruct-2507-fp16",
         "temperature": 0.1,
@@ -141,7 +144,18 @@ LLM_PRESETS = {
         "api_key_env": "OPENAI_API_KEY",
         "context_length": 4096,
     },
-    "ollama_qwen3_8b-q8": {
+    "ollama_qwen3_4b": {
+        "provider": "ollama",
+        "model": "qwen3:4b-instruct",
+        "temperature": 0.1,
+        "top_p": 0.3,
+        "max_tokens": 512,
+        "max_output_chars": 600,
+        "api_base": "http://10.58.11.60:11434",
+        "api_key_env": "OPENAI_API_KEY",
+        "context_length": 4096,
+    },
+    "ollama_qwen3_8b": {
         "provider": "ollama",
         "model": "qwen3:8b-q8_0",
         "temperature": 0.1,
@@ -169,27 +183,27 @@ LLM_PRESETS = {
 def build_llm_client(config: dict | None = None, preset_name: str | None = None) -> LLMClient:
     if not config:
         config = {}
-    preset_name = preset_name or config.get("preset", "ollama_qwen3_4b")
-    preset = LLM_PRESETS.get(preset_name, LLM_PRESETS["ollama_qwen3_4b"])
+    preset_name = preset_name or config.get("preset")
+    preset = LLM_PRESETS.get(preset_name)
     merged = {**preset, **config}
     llm_config = LLMConfig(
-        provider=merged.get("provider", "ollama"),
-        model=merged.get("model", "qwen3:4b-instruct-2507-fp16"),
-        temperature=float(merged.get("temperature", 0.1)),
-        top_p=float(merged.get("top_p", 0.3)),
-        max_tokens=int(merged.get("max_tokens", 512)),
-        max_output_chars=int(merged.get("max_output_chars", 600)),
-        api_base=merged.get("api_base", "http://10.58.11.60:11434"),
-        api_key_env=merged.get("api_key_env", "OPENAI_API_KEY"),
-        context_length=int(merged.get("context_length", 4096)),
+        provider=merged.get("provider"),
+        model=merged.get("model"),
+        temperature=float(merged.get("temperature")),
+        top_p=float(merged.get("top_p")),
+        api_base=merged.get("api_base"),
+        api_key_env=merged.get("api_key_env"),
+        context_length=int(merged.get("context_length")),
     )
+    mylog(f"llm_config:\n {llm_config}")
     return LLMClient(llm_config)
 
 if __name__ == "__main__":
-    llm_client = build_llm_client(preset_name="ollama_qwen3_8b-q8")
+    llm_client = build_llm_client(preset_name="ollama_qwen3_4b")
     # prompt_text = llm_client._build_prompt("你是谁？", "")
     user_prompt = """
     问题：你是谁？
     """
     system_prompt = "你是一个问答助手，根据用户的问题，回答用户的问题。"
-    print(llm_client.qa_with_system_structured(system_prompt=system_prompt, user_prompt=user_prompt))
+    # print(llm_client.qa_with_system(system_prompt=system_prompt, user_prompt=user_prompt))
+    print(llm_client.qa(user_prompt))

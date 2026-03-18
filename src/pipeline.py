@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import time
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from src.analyzer import (
@@ -106,6 +107,22 @@ def _normalize_similar_answer(value) -> list[dict]:
 def _log_elapsed(step: str, start: float) -> None:
     mylog(f"{step} 耗时 {time.perf_counter() - start:.3f}s")
 
+def _parallel_fetch_similar_answers(causes: list[str], max_workers: int) -> list:
+    if not causes:
+        return []
+    results: list = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(fetch_similar_answers, cause) for cause in causes]
+        for fut in as_completed(futures):
+            try:
+                res = fut.result()
+                if isinstance(res, list):
+                    results.extend(res)
+                else:
+                    results.append(res)
+            except Exception as e:
+                mylog(f"并行检索错误:{e}")
+    return results
 
 def build_similarity_md(unique_similar_answers, filter_a_json):
     md = []
@@ -126,12 +143,14 @@ def build_similarity_md(unique_similar_answers, filter_a_json):
         score = max_score * 10 if max_score <= 1 else max_score
         desc = similarity_desc(score)
         similar_jira_id = item_data.get('jira_id', '')
-        if user_jira_id != similar_jira_id:
-            row = (
-                f"| {similar_jira_id} | {item_data.get('issue_description', '')} | "
-                f"{'；'.join(problem_causes)} | {score:.2f} | {desc} |"
-            )
-            rows.append((score, row))
+        if user_jira_id == similar_jira_id:
+            mylog(f"跳过自比较:{user_jira_id}")
+            continue
+        row = (
+            f"| {similar_jira_id} | {item_data.get('issue_description', '')} | "
+            f"{'；'.join(problem_causes)} | {score:.2f} | {desc} |"
+        )
+        rows.append((score, row))
     rows.sort(key=lambda x: x[0], reverse=True)
     for _, row in rows:
         md.append(row)
@@ -159,7 +178,10 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
     # output_dir = config.get("output_dir", "reports")
 
     step_start = time.perf_counter()
-    llm_client = build_llm_client(preset_name=config.get("llm_preset", "ollama_qwen3_8b-q8"))
+    llm_preset = config.get("llm_preset")
+    mylog(f"llm_preset:{llm_preset}")
+    llm_client = build_llm_client(preset_name=llm_preset)
+    
     my_jira = MyJira("https://jira.amlogic.com", "lingzhi.bi", "Qwer!23456")
     _log_elapsed("初始化客户端", step_start)
 
@@ -195,60 +217,155 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
     {cleaned_comments_str}
     """
 
-    
-    user_prompt = f"""以下是问题标题：
-    {summary}
-    以下是问题描述：
-    {cleaned_description}
-    """
-    system_prompt = prompts.get(
-        "summary_system",
-        """
-    ## 角色：
-    你是一名专业的问题总结助手。
-
-    ## 任务：
-    根据提供的信息，严格生成以下内容，禁止输出其他无关信息：
-
-    1. **问题总结**：  
-    - 用一句话概括问题发生的操作和结果 
-    - **仅当涉及软件版本时需进行模糊化**（如具体 ROM 版本号、系统版本号） 
-    - 软件版本统一替换为：**“某版本”** 
-    - 设备型号、测试名称、异常类型等其他专有名词可正常保留
-
-    2. **问题现象**：  
-    - 简洁描述实际观察到的异常表现 
-    - 可保留具体技术名词、测试名称、异常类型及设备信息 
-    - **不对软件版本以外的信息做模糊处理**
-
-    3. **具体复现步骤**：  
-    - 使用 Step1、Step2、Step3 格式详细列出复现流程 
-    - 包含关键操作、环境、版本或依赖条件 
-    - **步骤中若出现软件版本，仅替换为“某版本”** 
-
-
-    ## 输出要求：
-    - 每个字段独立清晰，不允许合并或遗漏  
-    - 严禁添加“注：”“备注：”或其他多余文字  
-    - 使用 Markdown 或文本格式均可  
-    - 保持简洁、专业、易读
-    - **禁止出现具体的专有名称**（例如频道编号、确切文件名、设备型号、应用名称等），用“某频道”“某设备”“某片源”等替代。
-
-    ## 示例格式说明（仅作演示，不可直接使用）：
-    
-    问题总结：在某版本系统环境下执行 test_monkey 自动化测试时，触发 kernel_panic 导致测试中断 
-    问题现象：执行 test_monkey 过程中发生 kernel_panic，系统直接崩溃 
-    具体复现步骤： 
-    Step1：在某版本 Rom 环境下启动 test_monkey 测试 
-    Step2：执行自动化测试流程并模拟用户操作 
-    Step3：测试过程中系统触发 kernel_panic，测试流程终止
-    """,
-    )
-    # mylog(f"conbine_summary: {conbine_summary}")
     step_start = time.perf_counter()
-    resp = llm_client.qa_with_system(system_prompt=system_prompt, user_prompt=user_prompt)
+       
+    
+
+    filter_a_json = {
+        "jira_id":"",
+        "issue_description": "",
+        "reproduction_steps": [],
+        "software_version": "",
+        "hardware_version": "",
+        "comments": []
+    }
+
+
+
+    step_start = time.perf_counter()
+    def _run_summary():
+        user_prompt = f"""以下是问题标题：
+        {summary}
+        以下是问题描述：
+        {cleaned_description}
+        """
+        summary_system_prompt = prompts.get(
+            "summary_system",
+            """
+        ## 角色：
+        你是一名专业的问题总结助手。
+
+        ## 任务：
+        根据提供的信息，严格生成以下内容，禁止输出其他无关信息：
+
+        1. **问题总结**：  
+        - 用一句话概括问题发生的操作和结果 
+        - **仅当涉及软件版本时需进行模糊化**（如具体 ROM 版本号、系统版本号） 
+        - 软件版本统一替换为：**“某版本”** 
+        - 设备型号、测试名称、异常类型等其他专有名词可正常保留
+
+        2. **问题现象**：  
+        - 简洁描述实际观察到的异常表现 
+        - 可保留具体技术名词、测试名称、异常类型及设备信息 
+        - **不对软件版本以外的信息做模糊处理**
+
+        3. **具体复现步骤**：  
+        - 使用 Step1、Step2、Step3 格式详细列出复现流程 
+        - 包含关键操作、环境、版本或依赖条件 
+        - **步骤中若出现软件版本，仅替换为“某版本”** 
+
+
+        ## 输出要求：
+        - 每个字段独立清晰，不允许合并或遗漏  
+        - 严禁添加“注：”“备注：”或其他多余文字  
+        - 使用 Markdown 或文本格式均可  
+        - 保持简洁、专业、易读
+        - **禁止出现具体的专有名称**（例如频道编号、确切文件名、设备型号、应用名称等），用“某频道”“某设备”“某片源”等替代。
+
+        ## 示例格式说明（仅作演示，不可直接使用）：
+        
+        问题总结：在某版本系统环境下执行 test_monkey 自动化测试时，触发 kernel_panic 导致测试中断 
+        问题现象：执行 test_monkey 过程中发生 kernel_panic，系统直接崩溃 
+        具体复现步骤： 
+        Step1：在某版本 Rom 环境下启动 test_monkey 测试 
+        Step2：执行自动化测试流程并模拟用户操作 
+        Step3：测试过程中系统触发 kernel_panic，测试流程终止
+        """,
+        )
+        return llm_client.qa_with_system(system_prompt=summary_system_prompt, user_prompt=user_prompt)
+    def _run_comments():
+        summarize_user_prompt = prompts.get(
+            "comments_summary_user_prefix",
+            "帮我总结以下内容：",
+        )
+        summarize_sys_prompt = prompts.get(
+            "comments_summary_system",
+            """
+        ## 角色
+        你是一个技术总结助手。你的任务是根据用户提供的评论，将其整理为**完整的陈述句总结**。总结要求如下：
+
+        ## 任务
+        1. **保留所有关键信息**：
+        - 设备名称和类型
+        - 测试日期
+        - 设备现象（如黑屏、加载异常）
+        - 关键日志信息（WARN、错误码、接口URL等）
+        - 播放状态或异常
+        - 已知原因或错误（如OOM、IP-9）
+
+        2. **禁止推测或补充任何未明确出现的信息**。
+
+        3. **输出格式**：
+        - 单段完整陈述句，信息按设备顺序呈现。
+        - 保持日志和属性的原始表达，不修改数值或字段。
+        - 必须用中文描述。
+
+        ## 示例格式说明（仅作演示，不可直接使用）：
+        示例输入：
+        # 1台无线非裁剪音轨切换烤机（钟卫工位）-27日过来的现象：黑屏一直在加载 ## sendWatchLiveChannel: WARN: http error code = 404. [PERF] 498ms, url='[https://api.claro.com.br/residential/v1/userusages/contents'] ## 播放501 dash， 黑屏怀疑是app拉不到数据，因为app 访问license 也返回了404 # 1台无线裁剪音轨切换烤机（机顶盒2）-27日过来的现象：黑屏一直在加载 ## 【原因】有oom导致的IP-9
+
+        期望输出：
+        无线非裁剪音轨切换烤机（钟卫工位）在27日测试过程中出现黑屏一直在加载，日志显示“sendWatchLiveChannel: WARN: http error code = 404. [PERF] 498ms, url='https://api.claro.com.br/residential/v1/userusages/contents'”，播放501 dash时黑屏，且App访问license接口也返回404；无线裁剪音轨切换烤机（机顶盒2）在27日测试过程中同样出现黑屏一直在加载，日志显示有OOM导致IP-9。
+        """,
+        )
+        comments_extract_system_prompt = prompts.get(
+            "comments_extract_system",
+            """
+            ## 角色
+            你是一名 Jira 分析专家，负责根据用户提供的 comments 内容，自动提炼并总结问题的关键结论。
+
+            ## 任务
+            从用户输入的 Jira comments 中，抽取并分别生成三条 **一句话总结**，每条必须包含关键细节（如：播放顺序、log 表现、属性值、关键现象等）。  
+            若 comments 中 **缺少某一项的信息（复现方式/定位结果/解决方案）**，则该项返回 **空字符串**。
+
+
+            ## 输出要求
+            - 每个要点必须为一句话，不可多句。
+            - 必须包含关键细节（如 log 现象、属性名、播放顺序、错误状态特征等）。
+            - 若某项在 comments 中找不到任何相关信息，则该项输出为空。
+            - 不得虚构不存在的信息。
+            - **禁止出现具体专有名称与禁止出现人名**，包括但不限于：具体频道号、工程师姓名、确切文件名、设备型号、应用名称、内部代码文件名等。
+            - 如需指代，可使用“某频道”“某片源”“某配置”“某功能模块”“相关人员”等抽象替代描述。
+
+            ## 请严格按以下输出格式输出：
+
+            1、复现方式与现象:一句话总结（带关键细节），如缺失则返回空
+
+            2、定位结果:一句话总结（带关键细节），如缺失则返回空
+
+            3、解决方案:一句话总结（带关键细节），如缺失则返回空
+
+
+            """,
+        )
+        max_token = int(config.get("max_token", 2096))
+        sc = summarize_comments_to_max_token(
+            cleaned_comments_list,
+            max_token=max_token,
+            llm_client=llm_client,
+            system_prompt=summarize_sys_prompt,
+            user_prompt_prefix=summarize_user_prompt,
+        )
+        mylog(f"summarize_comments:{sc}")
+        ec = llm_client.qa_with_system(system_prompt=comments_extract_system_prompt, user_prompt="帮我总结以下内容：\n" + sc)
+        return sc, ec
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        fut_summary = ex.submit(_run_summary)
+        fut_comments = ex.submit(_run_comments)
+        resp = fut_summary.result()
+        summarize_comments, extract_summarize_comments = fut_comments.result()
+    _log_elapsed("并行 LLM 提问", step_start)
     mylog(f"resp:{resp}")
-    _log_elapsed("LLM 问题总结", step_start)
     
     # 提取问题总结
     summary_match = re.search(r"问题总结：([\s\S]*?)\s{2,}", resp)
@@ -261,101 +378,6 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
     # 提取具体复现步骤
     steps_match = re.search(r"具体复现步骤：([\s\S]*)", resp)
     reproduce_steps = steps_match.group(1).strip() if steps_match else ""
-
-    summarize_user_prompt = prompts.get(
-        "comments_summary_user_prefix",
-        "帮我总结以下内容：",
-    )
-    summarize_sys_prompt = prompts.get(
-        "comments_summary_system",
-        """
-    ## 角色
-    你是一个技术总结助手。你的任务是根据用户提供的评论，将其整理为**完整的陈述句总结**。总结要求如下：
-
-    ## 任务
-    1. **保留所有关键信息**：
-    - 设备名称和类型
-    - 测试日期
-    - 设备现象（如黑屏、加载异常）
-    - 关键日志信息（WARN、错误码、接口URL等）
-    - 播放状态或异常
-    - 已知原因或错误（如OOM、IP-9）
-
-    2. **禁止推测或补充任何未明确出现的信息**。
-
-    3. **输出格式**：
-    - 单段完整陈述句，信息按设备顺序呈现。
-    - 保持日志和属性的原始表达，不修改数值或字段。
-    - 必须用中文描述。
-
-    ## 示例格式说明（仅作演示，不可直接使用）：
-    示例输入：
-    # 1台无线非裁剪音轨切换烤机（钟卫工位）-27日过来的现象：黑屏一直在加载 ## sendWatchLiveChannel: WARN: http error code = 404. [PERF] 498ms, url='[https://api.claro.com.br/residential/v1/userusages/contents'] ## 播放501 dash， 黑屏怀疑是app拉不到数据，因为app 访问license 也返回了404 # 1台无线裁剪音轨切换烤机（机顶盒2）-27日过来的现象：黑屏一直在加载 ## 【原因】有oom导致的IP-9
-
-    期望输出：
-    无线非裁剪音轨切换烤机（钟卫工位）在27日测试过程中出现黑屏一直在加载，日志显示“sendWatchLiveChannel: WARN: http error code = 404. [PERF] 498ms, url='https://api.claro.com.br/residential/v1/userusages/contents'”，播放501 dash时黑屏，且App访问license接口也返回404；无线裁剪音轨切换烤机（机顶盒2）在27日测试过程中同样出现黑屏一直在加载，日志显示有OOM导致IP-9。
-    """,
-    )
-
-    max_token = int(config.get("max_token", 2096))
-    step_start = time.perf_counter()
-    summarize_comments = summarize_comments_to_max_token(
-        cleaned_comments_list,
-        max_token=max_token,
-        llm_client=llm_client,
-        system_prompt=summarize_sys_prompt,
-        user_prompt_prefix=summarize_user_prompt,
-    )
-    mylog(f"summarize_comments:{summarize_comments}")
-    _log_elapsed("LLM 评论摘要", step_start)
-
-    filter_a_json = {
-        "jira_id":"",
-        "issue_description": "",
-        "reproduction_steps": [],
-        "software_version": "",
-        "hardware_version": "",
-        "comments": []
-    }
-
-    user_prompt = f"""
-    帮我总结以下内容：
-    {summarize_comments}
-    """
-    system_prompt = prompts.get(
-        "comments_extract_system",
-        """
-    ## 角色
-    你是一名 Jira 分析专家，负责根据用户提供的 comments 内容，自动提炼并总结问题的关键结论。
-
-    ## 任务
-    从用户输入的 Jira comments 中，抽取并分别生成三条 **一句话总结**，每条必须包含关键细节（如：播放顺序、log 表现、属性值、关键现象等）。  
-    若 comments 中 **缺少某一项的信息（复现方式/定位结果/解决方案）**，则该项返回 **空字符串**。
-
-
-    ## 输出要求
-    - 每个要点必须为一句话，不可多句。
-    - 必须包含关键细节（如 log 现象、属性名、播放顺序、错误状态特征等）。
-    - 若某项在 comments 中找不到任何相关信息，则该项输出为空。
-    - 不得虚构不存在的信息。
-    - **禁止出现具体专有名称与禁止出现人名**，包括但不限于：具体频道号、工程师姓名、确切文件名、设备型号、应用名称、内部代码文件名等。
-    - 如需指代，可使用“某频道”“某片源”“某配置”“某功能模块”“相关人员”等抽象替代描述。
-
-    ## 请严格按以下输出格式输出：
-
-    1、复现方式与现象:一句话总结（带关键细节），如缺失则返回空
-
-    2、定位结果:一句话总结（带关键细节），如缺失则返回空
-
-    3、解决方案:一句话总结（带关键细节），如缺失则返回空
-
-
-    """,
-    )
-
-    step_start = time.perf_counter()
-    extract_summarize_comments = llm_client.qa_with_system(system_prompt=system_prompt, user_prompt=user_prompt)
-    _log_elapsed("LLM 评论结构化", step_start)
 
     fx = re.search(r"\s*1、复现方式与现象:\s*(.*?)\s*2、定位结果:", extract_summarize_comments, re.S)
     dw = re.search(r"\s*2、定位结果:\s*(.*?)\s*3、解决方案:", extract_summarize_comments, re.S)
@@ -439,17 +461,20 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
     extract_user_problem_causes = json.loads(extract_user_problem_causes)['problem_causes']
     filter_a_json['problem_causes'] = extract_user_problem_causes
     unique_similar_answers = []
-    for extract_problem_cause in extract_user_problem_causes:
-        similar_answer = fetch_similar_answers(extract_problem_cause)
-        mylog(f"similar_answer:{similar_answer}")
-        similar_answers.extend(similar_answer)
+    step_start = time.perf_counter()
+    parallel_results = _parallel_fetch_similar_answers(
+        extract_user_problem_causes,
+        int(config.get("concurrency", 4)),
+    )
+    mylog(f"parallel_results_size:{len(parallel_results)}")
+    similar_answers.extend(parallel_results)
     _log_elapsed("LLM 根因与相似问题检索", step_start)
 
     # 去重
     step_start = time.perf_counter()
     seen = set()
     for similar_answer in similar_answers:
-        mylog(f"similar_answer type:{type(similar_answer)}")
+        # mylog(f"similar_answer type:{type(similar_answer)}")
         for similar_answer_json in _normalize_similar_answer(similar_answer):
             similar_answer_jira_id = similar_answer_json.get('jira_id')
             similar_answer_sw_verison = similar_answer_json.get('software_version')
@@ -505,4 +530,4 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
 if __name__ == "__main__":
     run_pipeline()
 
-# /home/bj17300-049u/work/find_similar_jira/311venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000
+# cd /home/bj17300-049u/work/find_similar_jira && /home/bj17300-049u/work/find_similar_jira/311venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000

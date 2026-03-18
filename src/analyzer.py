@@ -87,6 +87,24 @@ def score_similarity(
 def _tokenize(text: str) -> list[str]:
     return re.findall(r"[A-Za-z0-9_./:-]+", text.lower())
 
+def _term_frequency(tokens: list[str]) -> dict[str, float]:
+    freq: dict[str, float] = {}
+    for t in tokens:
+        if not t:
+            continue
+        freq[t] = freq.get(t, 0.0) + 1.0
+    total = sum(freq.values()) or 1.0
+    return {k: v / total for k, v in freq.items()}
+
+def _log_match_count(a: list[str], b: list[str]) -> int:
+    sa = set(a or [])
+    sb = set(b or [])
+    return len(sa & sb)
+
+def _normalize_count(count: int, denom: int) -> float:
+    d = denom if denom > 0 else 1
+    return count / d
+
 
 def _text_similarity(a: str, b: str) -> float:
     tokens_a = _tokenize(a)
@@ -97,7 +115,70 @@ def _text_similarity(a: str, b: str) -> float:
     tf_b = _term_frequency(tokens_b)
     return _cosine_similarity(tf_a, tf_b)
 
+def text_similarity(a: str | list[str], b: str | list[str], method: str = "concat") -> float:
+    def to_list(x):
+        if isinstance(x, str):
+            return [x] if x else []
+        return [t for t in x if t]
+    la = to_list(a)
+    lb = to_list(b)
+    if not la or not lb:
+        return 0.0
+    if method == "concat":
+        sa = "\n".join(la)
+        sb = "\n".join(lb)
+        return _text_similarity(sa, sb)
+    scores = []
+    for xa in la:
+        for xb in lb:
+            scores.append(_text_similarity(xa, xb))
+    if not scores:
+        return 0.0
+    if method == "pairwise_max":
+        return max(scores)
+    return sum(scores) / len(scores)
 
+def text_similarity_detailed(a: str | list[str], b: str | list[str], method: str = "pairwise") -> tuple[list[dict], float]:
+    def to_list(x):
+        if isinstance(x, str):
+            return [x] if x else []
+        return [t for t in x if t]
+    la = to_list(a)
+    lb = to_list(b)
+    results: list[dict] = []
+    max_score = 0.0
+    if not la or not lb:
+        return results, max_score
+    if method == "concat":
+        sa = "\n".join(la)
+        sb = "\n".join(lb)
+        score = _text_similarity(sa, sb)
+        ua_tokens = set(tokenize_with_jieba(sa))
+        sb_tokens = set(tokenize_with_jieba(sb))
+        overlap = list(ua_tokens & sb_tokens)
+        results.append({
+            "user_cause": sa,
+            "similar_cause": sb,
+            "score": score,
+            "overlap": overlap
+        })
+        max_score = score
+        return results, max_score
+    for xa in la:
+        for xb in lb:
+            score = _text_similarity(xa, xb)
+            if score > max_score:
+                max_score = score
+            ua_tokens = set(tokenize_with_jieba(xa))
+            sb_tokens = set(tokenize_with_jieba(xb))
+            overlap = list(ua_tokens & sb_tokens)
+            results.append({
+                "user_cause": xa,
+                "similar_cause": xb,
+                "score": score,
+                "overlap": overlap
+            })
+    return results, max_score
 def _cosine_similarity(a: dict[str, float], b: dict[str, float]) -> float:
     keys = set(a) | set(b)
     dot = sum(a.get(key, 0.0) * b.get(key, 0.0) for key in keys)
@@ -115,7 +196,8 @@ class CompareRequest(BaseModel):
     user_causes: List[str]
     similar_causes: List[str]
 # 停用词设置
-STOP_WORDS = {'的', '在', '导致', '且', '未', '为', '了', '着', '是', '有', '对', '和', '与', '及', '或', '等', '之', '个', '这', '那', '都', '也', '就', '去', '又', '能', '会', '要', '将', '让', '但', '并', '给', '从', '向', '上', '下', '里', '外', '中', '前', '后', ' ', ',', '，', '.', '。', '、', ':', '：', ';', '；', '(', ')', '（', '）', '[', ']', '【', '】', '{', '}', '"', '"', "'", "'"}
+STOP_WORDS = {' ', '\t', '\n', ',', '，', '.', '。', '、', ':', '：', ';', '；', '(', ')', '（', '）', '[', ']', '【', '】', '{', '}', '"', "'", '!', '！', '?', '？', '-', '_', '/', '\\'}
+# STOP_WORDS = {'的', '在', '且', '未', '为', '了', '着', '是', '有', '对', '和', '与', '及', '或', '等', '之', '个', '这', '那', '都', '也', '就', '去', '又', '能', '会', '要', '将', '让', '但', '并', '给', '从', '向', '上', '下', '里', '外', '中', '前', '后', ' ', ',', '，', '.', '。', '、', ':', '：', ';', '；', '(', ')', '（', '）', '[', ']', '【', '】', '{', '}', '"', '"', "'", "'"}
 
 def tokenize_with_jieba(text):
     if not text:
@@ -132,37 +214,43 @@ def compare_similarity(user_causes: list[str], similar_causes: list[str]):
         return [], max_score
 
     all_texts = user_causes + similar_causes
-    
+    alpha = 0.6
     try:
-        # 每次请求动态构建 TF-IDF 矩阵
-        # 注意：在生产环境中，如果有固定的语料库，应该预先训练好 vectorizer 并持久化
-        # 这里为了演示方便，针对每次请求的文本集进行 fit_transform
-        vectorizer = TfidfVectorizer(tokenizer=tokenize_with_jieba, token_pattern=None)
-        tfidf_matrix = vectorizer.fit_transform(all_texts)
-        
-        user_vectors = tfidf_matrix[:len(user_causes)]
-        similar_vectors = tfidf_matrix[len(user_causes):]
-        
-        similarity_matrix = cosine_similarity(user_vectors, similar_vectors)
-        
+        vec_word = TfidfVectorizer(tokenizer=tokenize_with_jieba, token_pattern=None)
+        tfidf_word = vec_word.fit_transform(all_texts)
+        user_word = tfidf_word[:len(user_causes)]
+        similar_word = tfidf_word[len(user_causes):]
+        sim_word = cosine_similarity(user_word, similar_word)
+
+        vec_char = TfidfVectorizer(analyzer='char', ngram_range=(3, 5))
+        tfidf_char = vec_char.fit_transform(all_texts)
+        user_char = tfidf_char[:len(user_causes)]
+        similar_char = tfidf_char[len(user_causes):]
+        sim_char = cosine_similarity(user_char, similar_char)
+
+        fused = alpha * sim_word + (1 - alpha) * sim_char
+
         results = []
-        
         for i, user_cause in enumerate(user_causes):
             for j, similar_cause in enumerate(similar_causes):
-                score = float(similarity_matrix[i][j]) # Convert numpy float to python float
+                score = float(fused[i][j])
                 if score > max_score:
                     max_score = score
+                ua_tokens = set(tokenize_with_jieba(user_cause))
+                sb_tokens = set(tokenize_with_jieba(similar_cause))
+                overlap = list(ua_tokens & sb_tokens)
                 results.append({
                     "user_cause": user_cause,
                     "similar_cause": similar_cause,
-                    "score": score
+                    "score": score,
+                    "overlap": overlap
                 })
         return results, max_score
     except Exception as e:
         raise RuntimeError(f"Error calculating similarity: {str(e)}") from e
 if __name__ == "__main__":
-    a_text = ["由于 buffer manager 初始化失败，内核触发空指针并崩溃"]
-    b_text = ["buffer manager 初始化失败导致内核空指针崩溃"]
+    a_text = ["双解码过程中旧补丁释放后导致patch_src被错误设置为INVAL","patch_src管理应置于每个补丁内部而非统一补丁管理器中"]
+    b_text = ["补丁管理逻辑未正确区分不同场景，导致patch_src参数在部分情况下被错误置为INVAL","补丁管理逻辑错误导致OTT-83766标志状态在操作过程中被意外重置"]
     print(compare_similarity(a_text, b_text))
 
 
