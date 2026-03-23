@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <remote name="trunk" fetch="ssh://source.amlogic.com:29418/miaospu/" review="http://source.amlogic.com/"/>
+  <remote fetch="ssh://git@source.amlogic.com/wifi_bt/customer/w2" name="sourcew2" />
+  
+  <project name="DTVKit/AFD" path="common/driver_modules/DTVKit/AFD" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="." dest="common/common14-5.15/driver_modules/DTVKit/AFD"/>
+  </project>
+  <project name="DTVKit/android-inputsource" path="vendor/amlogic/reference/external/DTVKit/android-inputsource" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="DTVKit/ccta" path="vendor/amlogic/reference/external/DTVKit/releaseDTVKit/ccta" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="DTVKit/dtvkit-amlogic" path="vendor/amlogic/reference/external/DTVKit/dtvkit-amlogic" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="DTVKit/releaseDTVKit" path="vendor/amlogic/reference/external/DTVKit/releaseDTVKit" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="amlogic/tools/fip" path="bootloader/uboot-repo/fip" remote="trunk" revision="u-amlogic-darkknight">
+    <copyfile src="mk" dest="bootloader/uboot-repo/mk"/>
+  </project>
+  <project name="cas/cas-hal" path="vendor/amlogic/reference/external/DTVKit/cas_hal" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/bluebell" path="device/amlogic/bluebell_wv4" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/common" remote="trunk" revision="u-amlogic-darkknight">
+    <copyfile src="vf/vendor_freeze_build.sh" dest="vendor_freeze_build.sh"/>
+  </project>
+  <project name="device/amlogic/ohm" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/ohm_wv4" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/ohmcas" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/ohmcas2" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/oppen" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/oppen_wv4" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/oppencas" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/pascal" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/planck" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/planck_wv4" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/qurra" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/raman" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/ross" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="device/amlogic/tyson" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="dvb" path="vendor/amlogic/reference/external/dvb" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="firmware/aocpu" path="bootloader/uboot-repo/bl30/src_ao" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="firmware/bin/bl2" path="bootloader/uboot-repo/bl2/bin" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="firmware/bin/bl31" path="bootloader/uboot-repo/bl31/bl31_2.7/bin" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="firmware/bin/bl32" path="bootloader/uboot-repo/bl32/bl32_3.18/bin" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="firmware/bin/bl40/dummy" path="bootloader/uboot-repo/bl40/bin" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="firmware/bin/templates" path="bootloader/uboot-repo/soc/templates" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="kernel/build" path="common/common14-5.15/build/kernel" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="kleaf/bazel.sh" dest="common/common14-5.15/tools/bazel"/>
+    <linkfile src="kleaf/bazel.WORKSPACE" dest="common/common14-5.15/WORKSPACE"/>
+    <linkfile src="build.sh" dest="common/common14-5.15/build/build.sh"/>
+    <linkfile src="build_abi.sh" dest="common/common14-5.15/build/build_abi.sh"/>
+    <linkfile src="build_test.sh" dest="common/common14-5.15/build/build_test.sh"/>
+    <linkfile src="build_utils.sh" dest="common/common14-5.15/build/build_utils.sh"/>
+    <linkfile src="config.sh" dest="common/common14-5.15/build/config.sh"/>
+    <linkfile src="envsetup.sh" dest="common/common14-5.15/build/envsetup.sh"/>
+    <linkfile src="_setup_env.sh" dest="common/common14-5.15/build/_setup_env.sh"/>
+    <linkfile src="multi-switcher.sh" dest="common/common14-5.15/build/multi-switcher.sh"/>
+    <linkfile src="abi" dest="common/common14-5.15/build/abi"/>
+    <linkfile src="static_analysis" dest="common/common14-5.15/build/static_analysis"/>
+  </project>
+  <project name="kernel/common" path="common/common14-5.15/common" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="." dest="common/common14-5.15/.source_date_epoch_dir"/>
+  </project>
+  <project name="kernel/common-modules/virtual-device" path="common/common14-5.15/common-modules/virtual-device" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="kernel/common_drivers" path="common/common14-5.15/common/common_drivers" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="mk.sh" dest="common/common14-5.15/mk.sh"/>
+  </project>
+  <project name="kernel/configs" path="common/common14-5.15/kernel/configs" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="kernel/gki_image" path="common/common14-5.15/gki_image" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="kernel/prebuilts/build-tools" path="common/common14-5.15/prebuilts/kernel-build-tools" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="kernel/project" path="common/project" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="build/mk_script.sh" dest="mk"/>
+    <linkfile src="build/mk_script.sh" dest="common/mk"/>
+  </project>
+  <project name="kernel/tests" path="common/common14-5.15/kernel/tests" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="libdmxresconf" path="vendor/amlogic/reference/libdmxresconf" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="libdvr" path="vendor/amlogic/reference/libdvr" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="libsecdmx_release" path="vendor/amlogic/reference/libsecdmx_release" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="linux/amlogic/meson_display" path="hardware/amlogic/hwcomposer/mesondisplay" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="linux/amlogic/meson_mali" path="vendor/amlogic/common/gpu-lib" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/amlogic/external/libzvbi_src" path="vendor/amlogic/reference/external/libzvbi_src" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/build/bazel_common_rules" path="common/common14-5.15/build/bazel_common_rules" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/external/bazel-skylib" path="common/common14-5.15/external/bazel-skylib" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/external/ffmpeg-aml" path="vendor/amlogic/common/external/ffmpeg" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/external/ntfs-3g" path="vendor/amlogic/common/external/ntfs-3g" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/external/python/absl-py" path="common/common14-5.15/external/python/absl-py" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/external/stardoc" path="common/common14-5.15/external/stardoc" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic" path="hardware/amlogic" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/adla" path="vendor/amlogic/common/adla_lib" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/adla_driver" path="common/driver_modules/adla/driver" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="." dest="common/common14-5.15/driver_modules/adla/driver"/>
+  </project>
+  <project name="platform/hardware/amlogic/aml_npu_common" path="vendor/amlogic/common/aml_npu_common" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/aucpu_fw" path="hardware/amlogic/aucpu_fw" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/audio" path="hardware/amlogic/audio" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/bluetooth" path="vendor/amlogic/common/wifi_bt/bluetooth/amlogic" remote="sourcew2" revision="source/openlinux/wifi_bt/w2/mi" />
+  <project name="platform/hardware/amlogic/cve_driver" path="hardware/amlogic/cve/driver" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/cve_lib" path="hardware/amlogic/cve/lib" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/gralloc" path="hardware/amlogic/gralloc" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/hwcomposer" path="hardware/amlogic/hwcomposer" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/libencoder" path="vendor/amlogic/common/libencoder" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/media_modules" path="common/driver_modules/media_modules" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="." dest="common/common14-5.15/driver_modules/media_modules"/>
+  </project>
+  <project name="platform/hardware/amlogic/tuner" path="hardware/amlogic/tuner" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/amlogic/tv_input" path="hardware/amlogic/tv" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/arm/gpu" path="common/driver_modules/gpu" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="." dest="common/common14-5.15/driver_modules/gpu"/>
+  </project>
+  <project name="platform/hardware/arm/isp" path="common/driver_modules/camera" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="." dest="common/common14-5.15/driver_modules/camera"/>
+  </project>
+  <project name="platform/hardware/verisilicon/npu" path="vendor/amlogic/common/npu" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/amlogic/drivers/w1" path="common/driver_modules/wifi_bt/wifi/amlogic/w1/wifi" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/amlogic/drivers/w1u" path="common/driver_modules/wifi_bt/wifi/amlogic/w1u" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/amlogic/drivers/w2" path="common/driver_modules/wifi_bt/wifi/amlogic/w2" remote="sourcew2" revision="source/openlinux/wifi_bt/w2/mi" />
+  <project name="platform/hardware/wifi/amlogic/drivers/w2l" path="common/driver_modules/wifi_bt/wifi/amlogic/w2l" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/amlogic/drivers/wifi_comm" path="common/driver_modules/wifi_bt/wifi/amlogic/wifi_comm" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/atbm" path="common/driver_modules/wifi_bt/wifi/atbm" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/broadcom/drivers/ap6xxx" path="common/driver_modules/wifi_bt/wifi/broadcom/ap6xxx" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/marvell/drivers/sd8987" path="common/driver_modules/wifi_bt/wifi/marvell/sd8987" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/mtk/drivers/mt7661" path="common/driver_modules/wifi_bt/wifi/mtk/drivers/mt7661" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/mtk/drivers/mt7663u" path="common/driver_modules/wifi_bt/wifi/mtk/drivers/mt7663u" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/mtk/drivers/mt7668u" path="common/driver_modules/wifi_bt/wifi/mtk/drivers/mt7668u" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/qualcomm/drivers/qca6174" path="common/driver_modules/wifi_bt/wifi/qualcomm/qca6174" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/realtek/drivers/8723bu" path="common/driver_modules/wifi_bt/wifi/realtek/8723bu" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/realtek/drivers/8723du" path="common/driver_modules/wifi_bt/wifi/realtek/8723du" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/realtek/drivers/8733bu" path="common/driver_modules/wifi_bt/wifi/realtek/8733bu" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/realtek/drivers/8821cu" path="common/driver_modules/wifi_bt/wifi/realtek/8821cu" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/realtek/drivers/8822cs" path="common/driver_modules/wifi_bt/wifi/realtek/8822cs" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/realtek/drivers/8822cu" path="common/driver_modules/wifi_bt/wifi/realtek/8822cu" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/realtek/drivers/8822es" path="common/driver_modules/wifi_bt/wifi/realtek/8822es" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/realtek/drivers/8852be" path="common/driver_modules/wifi_bt/wifi/realtek/8852be" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/realtek/drivers/8852bs" path="common/driver_modules/wifi_bt/wifi/realtek/8852bs" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/hardware/wifi/unisoc/drivers/uwe5621" path="common/driver_modules/wifi_bt/wifi/unisoc/uwe5621" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/AppInstaller" path="vendor/amlogic/reference/apps/AppInstaller" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/DLNA" path="vendor/amlogic/reference/apps/DLNA" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/DroidTvExtras" path="vendor/amlogic/reference/apps/DroidTvExtras" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/DroidTvSettings" path="vendor/amlogic/reference/apps/DroidTvSettings" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/FileBrowser" path="vendor/amlogic/reference/apps/FileBrowser" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/MboxLauncher2" path="vendor/amlogic/reference/apps/MboxLauncher2" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/Miracast" path="vendor/amlogic/reference/apps/Miracast" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/NativeImagePlayer" path="vendor/amlogic/reference/apps/NativeImagePlayer" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/RemoteIME" path="vendor/amlogic/reference/apps/RemoteIME" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/amlogic/TvInput" path="vendor/amlogic/reference/apps/TvInput" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/packages/apps/Updater" path="vendor/amlogic/reference/apps/Updater" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/prebuilts/bazel/linux-x86_64" path="common/common14-5.15/prebuilts/bazel/linux-x86_64" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/prebuilts/build-tools" path="common/common14-5.15/prebuilts/build-tools" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/prebuilts/clang-tools" path="common/common14-5.15/prebuilts/clang-tools" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/prebuilts/clang/host/linux-x86" path="common/common14-5.15/prebuilts/clang/host/linux-x86" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.17-4.8" path="common/common14-5.15/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.17-4.8" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/prebuilts/jdk/jdk11" path="common/common14-5.15/prebuilts/jdk/jdk11" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/system/tools/mkbootimg" path="common/common14-5.15/tools/mkbootimg" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/bluebell" path="vendor/amlogic/bluebell_wv4" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/common" path="vendor/amlogic/common" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src=".ref_android_bp" dest="vendor/amlogic/reference/Android.bp"/>
+    <linkfile src=".ref_android_mk" dest="vendor/amlogic/reference/Android.mk"/>
+  </project>
+  <project name="platform/vendor/amlogic/ohm" path="vendor/amlogic/ohm" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/ohm_wv4" path="vendor/amlogic/ohm_wv4" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/ohmcas" path="vendor/amlogic/ohmcas" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/ohmcas2" path="vendor/amlogic/ohmcas2" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/oppen_wv4" path="vendor/amlogic/oppen_wv4" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/oppencas" path="vendor/amlogic/oppencas" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/planck_wv4" path="vendor/amlogic/planck_wv4" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/raman" path="vendor/amlogic/raman" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="platform/vendor/amlogic/tyson" path="vendor/amlogic/tyson" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="rtos_sdk/arch/riscv" path="bootloader/uboot-repo/bl30/rtos_sdk/arch/riscv" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="rtos_sdk/boards/riscv" path="bootloader/uboot-repo/bl30/rtos_sdk/boards/riscv" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="rtos_sdk/build" path="bootloader/uboot-repo/bl30/rtos_sdk/build_system" remote="trunk" revision="u-amlogic-darkknight">
+    <copyfile src="Makefile" dest="bootloader/uboot-repo/bl30/rtos_sdk/Makefile"/>
+  </project>
+  <project name="rtos_sdk/drivers_aocpu" path="bootloader/uboot-repo/bl30/rtos_sdk/drivers_aocpu" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="rtos_sdk/freertos" path="bootloader/uboot-repo/bl30/rtos_sdk/kernel/freertos" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="rtos_sdk/libc" path="bootloader/uboot-repo/bl30/rtos_sdk/lib/libc" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="rtos_sdk/product/aocpu" path="bootloader/uboot-repo/bl30/rtos_sdk/products/aocpu" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="rtos_sdk/scripts" path="bootloader/uboot-repo/bl30/rtos_sdk/scripts" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="rtos_sdk/soc/riscv" path="bootloader/uboot-repo/bl30/rtos_sdk/soc/riscv" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="toolchain/prebuilts/ndk/r23" path="common/common14-5.15/prebuilts/ndk-r23" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="uboot" path="bootloader/uboot-repo/bl33/v2023" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/ASPlayer" path="vendor/amlogic/common/ASPlayer" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/AmStreamingInputService" path="vendor/amlogic/reference/apps/AmStreamingInputService" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/JDvrLib" path="vendor/amlogic/reference/apps/JDvrLib" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/attester" path="vendor/amlogic/common/attester" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/codec2" path="vendor/amlogic/common/codec2" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/common/aml_mp_sdk" path="vendor/amlogic/reference/aml_mp_sdk" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/common/apps/LauncherCustomization" path="vendor/amlogic/reference/apps/LauncherCustomization" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/dsp_util" path="vendor/amlogic/common/dsp/dsp_util" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/efuse" path="vendor/amlogic/common/efuse" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/frameworks/av" path="vendor/amlogic/common/frameworks/av" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/hdcp" path="vendor/amlogic/common/hdcp" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/libdsm" path="vendor/amlogic/common/libdsm" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/livetv" path="vendor/amlogic/reference/prebuilt/livetv" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/mediahal_sdk" path="vendor/amlogic/common/mediahal_sdk" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/oppen" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/pascal" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/planck" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/prebuilt" path="vendor/amlogic/reference/prebuilt" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/prebuilt/libmedia" path="vendor/amlogic/common/prebuilt/libmedia" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/prebuilt/libmediadrm" path="vendor/amlogic/common/prebuilt/libmediadrm" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/prebuilt/tuner" path="vendor/amlogic/reference/prebuilt/kernel-modules/tuner" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/provision" path="vendor/amlogic/common/provision" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/qurra" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/ross" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/subtitle" path="vendor/amlogic/reference/subtitle" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/system/libgdc" path="vendor/amlogic/common/system/libgdc" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/tdk_basic" path="vendor/amlogic/common/tdk" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/tdk_basic" path="vendor/amlogic/common/tdk/v3.8.0" remote="trunk" revision="u-amlogic-darkknight-v3.8.0" />
+  <project name="vendor/amlogic/tdk_basic" path="vendor/amlogic/common/tdk/v3.18.0" remote="trunk" revision="u-amlogic-darkknight-v3.18.0" />
+  <project name="vendor/amlogic/tdk_linuxdriver" path="common/driver_modules/tdk_linuxdriver" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="." dest="common/common14-5.15/driver_modules/tdk_linuxdriver"/>
+  </project>
+  <project name="vendor/amlogic/tools/DroidlogicPatch" path="vendor/amlogic/common/auto_patch" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/tv" path="vendor/amlogic/reference/tv" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/tvserver" path="vendor/amlogic/reference/tv/tvserver" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/amlogic/wifi" path="common/driver_modules/wifi_bt/wifi" remote="trunk" revision="u-amlogic-darkknight">
+    <linkfile src="." dest="common/common14-5.15/driver_modules/wifi_bt/wifi"/>
+  </project>
+  <project name="platform/vendor/bluetooth/drivers" path="common/driver_modules/wifi_bt/bt" remote="sourcew2" revision="source/openlinux/wifi_bt/w2/mi">
+    <linkfile src="." dest="common/common14-5.15/driver_modules/wifi_bt/bt"/>
+  </project>
+  <project name="vendor/external/freetype" path="vendor/amlogic/reference/external/freetype" remote="trunk" revision="u-amlogic-darkknight" />
+  <project name="vendor/widevine" remote="trunk" revision="u-amlogic-darkknight" />
+  
+  <!-- new repos on source -->
+  <project name="device/xiaomi/customer" path="device/xiaomi/adastra" remote="trunk" revision="u-amlogic-adastra" dest-branch="refs/heads/u-amlogic-adastra" upstream="refs/heads/u-amlogic-adastra"/>
+  <project name="device/xiaomi/customer" path="device/xiaomi/darkknight" remote="trunk" revision="u-amlogic-darkknight" dest-branch="refs/heads/u-amlogic-darkknight" upstream="refs/heads/u-amlogic-darkknight"/>
+  <project name="kernel/common_drivers/customer" path="common/common14-5.15/common/common_drivers/arch/arm64/boot/dts/adastra" remote="trunk" revision="u-amlogic-adastra" upstream="refs/heads/u-amlogic-adastra"/>
+  <project name="kernel/common_drivers/customer" path="common/common14-5.15/common/common_drivers/arch/arm64/boot/dts/darkknight" remote="trunk" revision="u-amlogic-darkknight" upstream="refs/heads/u-amlogic-darkknight"/>
+  <project name="vendor/xiaomi/GoogleCodePatch" path="GoogleCodePatch" remote="trunk" revision="u-amlogic-darkknight"/>
+  
+  <project name="uboot/customer" path="device/xiaomi/secboot-adastra" remote="trunk" revision="adastra" upstream="refs/heads/adastra"/>
+  <project name="uboot/customer" path="device/xiaomi/secboot-darkknight" remote="trunk" revision="darkknight" upstream="refs/heads/darkknight"/>
+  
+  <include name="u-google-aosp-source.xml" />
+</manifest>

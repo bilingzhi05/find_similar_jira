@@ -18,6 +18,7 @@ from src.processor import (
     fetch_similar_answers,
 )
 from utils.llm_client import build_llm_client
+from utils.find_patch import collect_patch_urls
 from utils.jira_client import MyJira
 from utils.logger import log as mylog
 import re
@@ -124,21 +125,22 @@ def _parallel_fetch_similar_answers(causes: list[str], max_workers: int) -> list
                 mylog(f"并行检索错误:{e}")
     return results
 
-def build_similarity_md(unique_similar_answers, filter_a_json):
+def build_similarity_md(unique_similar_answers, filter_a_json, my_jira):
     md = []
-    md.append("| 条目 | 触发场景/测试用例 | 根因信息 | 相似度(0–10) | 相似原因简述 |")
-    md.append("|------|------------------|-----------|---------------|---------------|")
+    md.append("| 条目 | 触发场景/测试用例 | 根因信息 | 相似度(0–10) | 相似原因简述 | 所有patch url | 已合入到当前查询jira的patch url |")
+    md.append("|------|------------------|-----------|---------------|---------------|-----------|-----------|")
     user_causes = _normalize_problem_causes(filter_a_json.get("problem_causes"))
     user_causes_text = "；".join(user_causes)
     user_jira_id = filter_a_json.get('jira_id', '')
     md.append(
         f"| {user_jira_id} | {filter_a_json.get('issue_description', '')} | "
-        f"{user_causes_text} | - | - |"
+        f"{user_causes_text} | - | - | - |"
     )
     rows = []
     for item in unique_similar_answers:
         item_data = item if isinstance(item, dict) else {}
         problem_causes = _normalize_problem_causes(item_data.get("problem_causes"))
+        problem_causes_text = '；'.join(problem_causes)
         _, max_score = compare_similarity(user_causes, problem_causes)
         score = max_score * 10 if max_score <= 1 else max_score
         desc = similarity_desc(score)
@@ -146,9 +148,22 @@ def build_similarity_md(unique_similar_answers, filter_a_json):
         if user_jira_id == similar_jira_id:
             mylog(f"跳过自比较:{user_jira_id}")
             continue
+        merge_urls_text = ""
+        try:
+            all_urls, merge_urls = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
+            if merge_urls:
+                merge_urls_text = "；".join(merge_urls)
+            else:
+                merge_urls_text = "无"
+            if all_urls:
+                all_urls_text = "；".join(all_urls)
+            else:
+                all_urls_text = "无"
+        except Exception as exc:
+            mylog(f"collect_patch_urls failed for {similar_jira_id}: {exc}")
         row = (
             f"| {similar_jira_id} | {item_data.get('issue_description', '')} | "
-            f"{'；'.join(problem_causes)} | {score:.2f} | {desc} |"
+            f"{problem_causes_text} | {score:.2f} | {desc} | {all_urls_text} | {merge_urls_text} | "
         )
         rows.append((score, row))
     rows.sort(key=lambda x: x[0], reverse=True)
@@ -164,6 +179,7 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
         raise ValueError("key is required")
     total_start = time.perf_counter()
     reports_dir = Path(f"reports/{key}")
+    mylog(f"开始检查与{key}相似Jira")
     for offset in range(2):
         date_str = (datetime.now() - timedelta(days=offset)).strftime("%Y%m%d")
         existing_path = reports_dir / f"{key}_{date_str}_report.md"
@@ -218,8 +234,6 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
     """
 
     step_start = time.perf_counter()
-       
-    
 
     filter_a_json = {
         "jira_id":"",
@@ -491,7 +505,7 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
     _log_elapsed("相似问题去重", step_start)
     mylog(f"unique_similar_answers:{unique_similar_answers}")
     step_start = time.perf_counter()
-    md = build_similarity_md(unique_similar_answers, filter_a_json)
+    md = build_similarity_md(unique_similar_answers, filter_a_json, my_jira)
     reports_dir.mkdir(parents=True, exist_ok=True)
     report_path = reports_dir / f"{key}_{datetime.now().strftime('%Y%m%d')}_report.md"
     with open(report_path, "w", encoding="utf-8") as file_handle:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 from dataclasses import dataclass
 from utils.logger import log as mylog
 
@@ -130,59 +131,25 @@ class LLMClient:
         )
 
 
-LLM_PRESETS = {
-    "ollama_qwen3_4b_fp16": {
-        "provider": "ollama",
-        "model": "qwen3:4b-instruct-2507-fp16",
-        "temperature": 0.1,
-        "top_p": 0.3,
-        "max_tokens": 512,
-        "max_output_chars": 600,
-        "api_base": "http://10.58.11.60:11434",
-        "api_key_env": "OPENAI_API_KEY",
-        "context_length": 4096,
-    },
-    "ollama_qwen3_4b": {
-        "provider": "ollama",
-        "model": "qwen3:4b-instruct",
-        "temperature": 0.1,
-        "top_p": 0.3,
-        "max_tokens": 512,
-        "max_output_chars": 600,
-        "api_base": "http://10.58.11.60:11434",
-        "api_key_env": "OPENAI_API_KEY",
-        "context_length": 4096,
-    },
-    "ollama_qwen3_8b": {
-        "provider": "ollama",
-        "model": "qwen3:8b-q8_0",
-        "temperature": 0.1,
-        "top_p": 0.3,
-        "max_tokens": 512,
-        "max_output_chars": 600,
-        "api_base": "http://10.58.11.60:11434",
-        "api_key_env": "OPENAI_API_KEY",
-        "context_length": 4096,
-    },
-    "openai_default": {
-        "provider": "openai",
-        "model": "gpt-4o-mini",
-        "temperature": 0.1,
-        "top_p": 0.3,
-        "max_tokens": 512,
-        "max_output_chars": 600,
-        "api_base": None,
-        "api_key_env": "OPENAI_API_KEY",
-        "context_length": 4096,
-    },
-}
+CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.json"
+
+
+def _load_presets_from_config() -> dict:
+    if not CONFIG_PATH.exists():
+        return {}
+    try:
+        data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return data.get("llm_presets", {})
 
 
 def build_llm_client(config: dict | None = None, preset_name: str | None = None) -> LLMClient:
     if not config:
         config = {}
     preset_name = preset_name or config.get("preset")
-    preset = LLM_PRESETS.get(preset_name)
+    presets = _load_presets_from_config()
+    preset = presets.get(preset_name, {}) if preset_name else {}
     merged = {**preset, **config}
     llm_config = LLMConfig(
         provider=merged.get("provider"),
@@ -197,11 +164,24 @@ def build_llm_client(config: dict | None = None, preset_name: str | None = None)
     return LLMClient(llm_config)
 
 if __name__ == "__main__":
-    llm_client = build_llm_client(preset_name="ollama_qwen3_8b")
+    llm_client = build_llm_client(preset_name="ollama_qwen3_4b_fp16")
     # prompt_text = llm_client._build_prompt("你是谁？", "")
     user_prompt = """
     问题：你是谁？
     """
     system_prompt = "你是一个问答助手，根据用户的问题，回答用户的问题。"
+
     # print(llm_client.qa_with_system(system_prompt=system_prompt, user_prompt=user_prompt))
-    print(llm_client.qa(user_prompt))
+    # print(llm_client.qa(user_prompt))
+    from langchain_community.llms import Tongyi
+
+
+    import os
+
+
+    llm = Tongyi(
+        model_name="qwen-plus",
+        dashscope_api_key=os.getenv("DASHSCOPE_API_KEY") or "sk-1975ed87aeb146809f6c30651313e850",
+    )
+    response = llm.invoke("你是谁")
+    print(response)

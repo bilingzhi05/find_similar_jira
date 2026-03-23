@@ -1,0 +1,9 @@
+[{
+	"Project ID" : "BM20AP-S905X5M",
+	"download_repo": "repo init -u ssh://git@source.amlogic.com/miaospu/platform/manifest.git -m u-amlogic-aosp-source.xml",
+	"repo_path": "/home/amlogic/FAE/AutoLog/lingzhi.bi/find_similar_jira/A_REPO_PATH/u-amlogic-aosp-source.xml"
+},{
+	"Project ID" : "BM20AQ-S905X5M",
+	"download_repo": "repo init -u ssh://git@source.amlogic.com/migtvuni/platform/manifest.git -m mi-u-gtv.xml",
+	"repo_path": "/home/amlogic/FAE/AutoLog/lingzhi.bi/find_similar_jira/A_REPO_PATH/manifest_migtvu/manifests/mi-u-gtv.xml"
+}]

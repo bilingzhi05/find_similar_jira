@@ -6,3 +6,6 @@ langchain_ollama
 fastapi
 uvicorn
 scikit-learn
+jieba
+langchain_community
+dashscope

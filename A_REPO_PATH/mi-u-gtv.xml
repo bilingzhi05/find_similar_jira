@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <remote fetch="git://git.myamlogic.com/" name="secure" review="http://scgit.amlogic.com:8080/"/>
+  <remote fetch="ssh://git@source.amlogic.com/wifi_bt/customer/w2" name="sourcew2" />
+  <remote name="miaosp" fetch="ssh://source.amlogic.com:29418/miaospu/" review="http://source.amlogic.com/"/>
+
+  <include name="google_C/u-google-source-0816.xml" />
+  <include name="aml_D/u-amlogic-source-0809.xml" />
+  <project name="device/xiaomi/secureboot" path="device/xiaomi/secboot-soul" remote="fae-local" revision="soul" upstream="refs/heads/soul"/>
+  <project name="device/xiaomi/secureboot" path="device/xiaomi/secboot-jaws" remote="fae-local" revision="jaws" upstream="refs/heads/jaws"/>
+  <project name="vendor/playready" path="vendor/amlogic/common/prebuilt/libmediadrm/playready" remote="secure" revision="8757387703da45bfff5a8c1e2818ecff9201b06a" upstream="refs/heads/openlinux/ott/u-amlogic-ab2"/>
+
+  <!-- w2 unify repos -->
+  <project name="platform/hardware/wifi/amlogic/drivers/w2" path="common/driver_modules/wifi_bt/wifi/amlogic/w2" remote="sourcew2" revision="source/openlinux/wifi_bt/w2/mi_S905X5M_20241226_Release" />
+  <project name="platform/vendor/bluetooth/drivers" path="common/driver_modules/wifi_bt/bt" remote="sourcew2" revision="source/openlinux/wifi_bt/w2/mi">
+    <linkfile src="." dest="common/common14-5.15/driver_modules/wifi_bt/bt"/>
+  </project>
+  <project name="platform/hardware/amlogic/bluetooth" path="vendor/amlogic/common/wifi_bt/bluetooth/amlogic" remote="sourcew2" revision="source/openlinux/wifi_bt/w2/mi_S905X5M_20241226_Release" />
+  <!-- NativeImagePlayer, use same repo with x5m aosp from miaospu -->
+  <project name="platform/packages/amlogic/NativeImagePlayer" path="vendor/amlogic/reference/apps/NativeImagePlayer" remote="miaosp" revision="u-amlogic-darkknight" />
+</manifest>
+

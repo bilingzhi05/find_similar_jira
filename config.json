@@ -1,6 +1,46 @@
 {
+  "llm_presets": {
+    "ollama_qwen3_4b_fp16": {
+      "provider": "ollama",
+      "model": "qwen3:4b-instruct-2507-fp16",
+      "temperature": 0.2,
+      "top_p": 0.3,
+      "api_base": "http://10.58.11.60:11434",
+      "api_key_env": "OPENAI_API_KEY",
+      "context_length": 4096
+    },
+    "ollama_qwen3_4b": {
+      "provider": "ollama",
+      "model": "qwen3:4b-instruct",
+      "temperature": 0.1,
+      "top_p": 0.3,
+      "api_base": "http://10.58.11.60:11434",
+      "api_key_env": "OPENAI_API_KEY",
+      "context_length": 4096
+    },
+    "ollama_qwen3_8b": {
+      "provider": "ollama",
+      "model": "qwen3:8b-q8_0",
+      "temperature": 0.1,
+      "top_p": 0.3,
+      "api_base": "http://10.58.11.60:11434",
+      "api_key_env": "OPENAI_API_KEY",
+      "context_length": 4096
+    },
+    "openai_default": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "temperature": 0.1,
+      "top_p": 0.3,
+      "max_tokens": 512,
+      "max_output_chars": 600,
+      "api_base": null,
+      "api_key_env": "OPENAI_API_KEY",
+      "context_length": 4096
+    }
+  },
   "pipeline": {
-    "llm_preset": "ollama_qwen3_4b_fp16",
+    "llm_preset": "ollama_qwen3_8b",
     "max_token": 2096,
     "prompts": {
       "summary_system": "## 角色：\n你是一名专业的问题总结助手。\n\n## 任务：\n根据提供的信息，严格生成以下内容，禁止输出其他无关信息：\n\n1. **问题总结**：  \n- 用一句话概括问题发生的操作和结果 \n- **仅当涉及软件版本时需进行模糊化**（如具体 ROM 版本号、系统版本号） \n- 软件版本统一替换为：**“某版本”** \n- 设备型号、测试名称、异常类型等其他专有名词可正常保留\n\n2. **问题现象**：  \n- 简洁描述实际观察到的异常表现 \n- 可保留具体技术名词、测试名称、异常类型及设备信息 \n- **不对软件版本以外的信息做模糊处理**\n\n3. **具体复现步骤**：  \n- 使用 Step1、Step2、Step3 格式详细列出复现流程 \n- 包含关键操作、环境、版本或依赖条件 \n- **步骤中若出现软件版本，仅替换为“某版本”** \n\n\n## 输出要求：\n- 每个字段独立清晰，不允许合并或遗漏  \n- 严禁添加“注：”“备注：”或其他多余文字  \n- 使用 Markdown 或文本格式均可  \n- 保持简洁、专业、易读\n- **禁止出现具体的专有名称**（例如频道编号、确切文件名、设备型号、应用名称等），用“某频道”“某设备”“某片源”等替代。\n\n## 示例格式说明（仅作演示，不可直接使用）：\n\n问题总结：在某版本系统环境下执行 test_monkey 自动化测试时，触发 kernel_panic 导致测试中断 \n问题现象：执行 test_monkey 过程中发生 kernel_panic，系统直接崩溃 \n具体复现步骤： \nStep1：在某版本 Rom 环境下启动 test_monkey 测试 \nStep2：执行自动化测试流程并模拟用户操作 \nStep3：测试过程中系统触发 kernel_panic，测试流程终止",
