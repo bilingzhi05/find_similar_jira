@@ -243,8 +243,18 @@ def collect_patch_urls(similar_jira_id: str, user_jira_id: str, my_jira: MyJira)
         # mylog(f"patch_detail_text: {patch_detail_text}")
         patch_info = _parse_change_detail(patch_detail_text)
         if patch_info:
-            change_id = patch_info.get("change_id") #获取提交信息中的changeid
+            if patch_info.get("error"): # 没有权限的change_id, 会返回error
+                error = str(patch_info.get("error"))
+                mylog(f"patch_url：{patch_url} patch_info: {patch_info}")
+                if patch_url:
+                    for idx, url in enumerate(all_urls):
+                        if url == patch_url:
+                            all_urls[idx] = f"{url} ({error})"
+                            break
+            change_id = patch_info.get("change_id")
         mylog(f"change_id: {change_id}")
+        if not change_id:
+            continue
         merged_info = find_merged_change_in_other_repos(change_id)
         mylog(f"merged_info: {merged_info}")
         if find_url_if_project_in_manifest(my_jira, user_jira_id, merged_info):
@@ -271,8 +281,8 @@ if __name__ == "__main__":
     #     "Another change: https://gerrit.amlogic.com/c/67890",
     # ]
     my_jira = MyJira("https://jira.amlogic.com", "lingzhi.bi", "Qwer!23456")
-    similar_jira_id = "OTT-75987"
-    user_jira_id = "OTT-92490" # 有没有合入这个项目的分支
+    similar_jira_id = "OTT-84834"
+    user_jira_id = "OTT-85767" # 有没有合入这个项目的分支
     all_urls, merge_urls = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
     mylog(f"all_urls: {all_urls}")
     mylog(f"merge_urls: {merge_urls}")

@@ -36,7 +36,7 @@ class GerritClient:
             print(f"Response: {resp.text}")
             error_response = {
                 "status_code": resp.status_code,
-                "error": resp.text
+                "error": resp.text.rstrip("\n")
             }
             return json.dumps(error_response)
         return resp.text.lstrip(")]}'\n")

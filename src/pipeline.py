@@ -171,8 +171,33 @@ def build_similarity_md(unique_similar_answers, filter_a_json, my_jira):
         md.append(row)
     return md
 
+def filter_table_by_similarity(table_str: str, threshold: float) -> str:
+    lines = [l.strip() for l in table_str.strip().splitlines() if l.strip()]
 
-def run_pipeline( config: dict | None = None, key: str | None = None):
+    # 表头 + 分隔线保留
+    header = lines[0]
+    separator = lines[1]
+
+    result_lines = [header, separator]
+
+    for line in lines[2:]:
+        cols = [c.strip() for c in line.split("|")[1:-1]]
+
+        score = cols[3]  # 第4列：相似度(0–10)
+
+        if score in ("", "-", "无"):
+            result_lines.append(line)
+            continue
+
+        try:
+            if float(score) >= threshold:
+                result_lines.append(line)
+        except ValueError:
+            continue
+
+    return "\n".join(result_lines)
+
+def run_pipeline( config: dict | None = None, key: str | None = None, limit_score: float = 4.0):
     config = config or {}
     prompts = config.get("prompts", {})
     if not key:
@@ -186,7 +211,8 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
         if existing_path.exists():
             mylog(f"命中两天内报告:{existing_path}")
             _log_elapsed("总耗时", total_start)
-            return existing_path.read_text(encoding="utf-8")
+            md_str = existing_path.read_text(encoding="utf-8")
+            return filter_table_by_similarity(md_str, limit_score)
 
     # llm_client = build_llm_client(config.get("llm"))
     # weight_root = float(config.get("similarity", {}).get("weight_root", 0.8))
@@ -513,7 +539,8 @@ def run_pipeline( config: dict | None = None, key: str | None = None):
         file_handle.write(output_md)
     _log_elapsed("生成报告", step_start)
     _log_elapsed("总耗时", total_start)
-    return output_md
+    
+    return filter_table_by_similarity(output_md, limit_score)
 
         
 
