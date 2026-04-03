@@ -44,6 +44,40 @@ def extract_patches_from_comments(comments: list[str]) -> list[dict]:
 
     return result, all_urls
 
+
+PATTERN = re.compile(
+    r"^common-issue(?:-([A-Za-z0-9._-]+))?(?:-PatchReleased)?$",
+    re.IGNORECASE
+)
+
+def extract_patches_from_common_issue_labels(similar_jira_id: str, my_jira) -> tuple[list[str], list[str]]:
+    labels = my_jira.getLabels(similar_jira_id)
+
+    if not isinstance(labels, list):
+        return [], []
+
+    released_patches = []
+    unreleased_patches = []
+
+    for label in labels:
+        if not isinstance(label, str):
+            continue
+
+        m = PATTERN.match(label.strip())
+        if not m:
+            continue
+
+        patch_value = m.group(1)  # 可能为 None（纯 common-issue）
+
+        if label.lower().endswith("-patchreleased"):
+            if patch_value:
+                released_patches.append(patch_value)
+        else:
+            if patch_value:
+                unreleased_patches.append(patch_value)
+
+    return released_patches, unreleased_patches
+
 def fetch_change_info(patch: dict, max_retries: int = 3, backoff_seconds: float = 1.0) -> str | None:
     url = patch.get("url") or ""
     change_id = patch.get("change_id")
@@ -228,10 +262,12 @@ def find_url_if_project_in_manifest(
     return False
 
 
-def collect_patch_urls(similar_jira_id: str, user_jira_id: str, my_jira: MyJira) -> tuple[list[str], list[str]]:
+def collect_patch_urls(similar_jira_id: str, user_jira_id: str, my_jira: MyJira) -> tuple[list[str], list[str], list[str], list[str]]:
     comments = my_jira.getComments(similar_jira_id)
     patches, all_urls = extract_patches_from_comments(comments)
     merge_urls = []
+    released_patches = []
+    unreleased_patches = []
     for patch in patches:
         change_id = patch.get("change_id")
         if not change_id:
@@ -261,18 +297,97 @@ def collect_patch_urls(similar_jira_id: str, user_jira_id: str, my_jira: MyJira)
             url = patch.get("url")
             if url:
                 merge_urls.append(url)
-    return all_urls, merge_urls
+        request_result = check_release_patch("change_id", change_id)
+        if patch_url:
+            if request_result.get("success"):
+                if not any(item.get("patch_url") == patch_url for item in released_patches):
+                    released_patches.append({"patch_url": patch_url, "patch_path": request_result.get("patch_path")})
+            else:
+                if not any(item.get("patch_url") == patch_url for item in unreleased_patches):
+                    unreleased_patches.append({"patch_url": patch_url, "patch_path": None})
 
+    return all_urls, merge_urls, released_patches, unreleased_patches
 
+import requests
+import urllib.parse
+
+def check_release_patch(search_type, change_id: str, verbose=False):
+    
+    json_files = ["patch_index_mainbranch.json", "patch_index_ab2.json", "patch_index_AOSP.json"]
+    for json_file in json_files:
+        # 构建请求参数
+        params = {}
+        
+        if search_type == 'change_id':
+            params['c'] = change_id
+        else:
+            params['p'] = change_id
+        
+        if json_file:
+            params['j'] = json_file
+        if verbose:
+            params['v'] = '1'
+        
+        # 发送请求到后端
+        url = f"http://ott-release-fae.amlogic.com:3000/?{urllib.parse.urlencode(params)}"
+        
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # 检查请求是否成功
+            
+            # 隐藏 loading（如果需要可以添加相应的状态管理）
+            # 显示结果
+            data = response.text
+            response_data = data if isinstance(data, str) else None
+            
+            pattern = r"\./[^\s\"']+\.patch\b"
+            m = re.search(pattern, str(response_data or ""))
+            patch_path = None
+            if m:
+                patch_path = m.group(0)
+            if patch_path:
+
+                mylog(f"patch_path: {patch_path}")
+                return {
+                    'success': True,
+                    'data': data,
+                    'patch_path': patch_path,
+                    'error': None
+                }
+            
+        except requests.exceptions.RequestException as error:
+            return {
+                'success': False,
+                'data': None,
+                'patch_path': None,
+                'error': str(error)
+            }
+    return {
+        'success': False,
+        'data': None,
+        'patch_path': None,
+        'error': None
+    }
+
+# 使用示例
+# result = send_request('change_id', 'some_value', 'file.json', True)
+# if result['success']:
+#     print(result['data'])
+# else:
+#     print(f'错误：{result["error"]}')
 @app.get("/collect_patch_urls")
 def collect_patch_urls_api(similar_jira_id: str, user_jira_id: str):
     my_jira = MyJira("https://jira.amlogic.com", "lingzhi.bi", "Qwer!23456")
-    all_urls, merge_urls = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
+    all_urls, merge_urls, released_patches, unreleased_patches = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
     mylog(f"all_urls: {all_urls}")
     mylog(f"merge_urls: {merge_urls}")
+    mylog(f"released_patches: {released_patches}")
+    mylog(f"unreleased_patches: {unreleased_patches}")
     return {
         "all_urls": all_urls,
         "merge_urls": merge_urls,
+        "released_patches": released_patches,
+        "unreleased_patches": unreleased_patches,
     }
 
 if __name__ == "__main__":
@@ -280,9 +395,18 @@ if __name__ == "__main__":
     #     "Change proposed: https://gerrit.amlogic.com/c/12345",
     #     "Another change: https://gerrit.amlogic.com/c/67890",
     # ]
+    # change_id = "I16042a0eb9feee4a08e128bc2bba514e9d481733"
+    # result = check_release_patch('change_id', change_id)
+    # if result['success']:
+    #     print(result['data'])
+    # else:
+    #     print(f'错误：{result["error"]}')
+    
     my_jira = MyJira("https://jira.amlogic.com", "lingzhi.bi", "Qwer!23456")
-    similar_jira_id = "OTT-84834"
+    similar_jira_id = "SWPL-245576"
     user_jira_id = "OTT-85767" # 有没有合入这个项目的分支
-    all_urls, merge_urls = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
+    all_urls, merge_urls, released_patches, unreleased_patches = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
     mylog(f"all_urls: {all_urls}")
     mylog(f"merge_urls: {merge_urls}")
+    mylog(f"released_patches: {released_patches}")
+    mylog(f"unreleased_patches: {unreleased_patches}")

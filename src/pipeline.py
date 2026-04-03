@@ -127,14 +127,14 @@ def _parallel_fetch_similar_answers(causes: list[str], max_workers: int) -> list
 
 def build_similarity_md(unique_similar_answers, filter_a_json, my_jira):
     md = []
-    md.append("| 条目 | 触发场景/测试用例 | 根因信息 | 相似度(0–10) | 相似原因简述 | 所有patch url | 已合入到当前查询jira的patch url |")
-    md.append("|------|------------------|-----------|---------------|---------------|-----------|-----------|")
+    md.append("| 条目 | 触发场景/测试用例 | 根因信息 | 相似度(0–10) | 相似原因简述 | 所有patch url | 已合入到当前查询jira的patch url | 是强制patch url | 不是强制patch url |")
+    md.append("|------|------------------|-----------|---------------|---------------|-----------|-----------|-----------|-----------|")
     user_causes = _normalize_problem_causes(filter_a_json.get("problem_causes"))
     user_causes_text = "；".join(user_causes)
     user_jira_id = filter_a_json.get('jira_id', '')
     md.append(
         f"| {user_jira_id} | {filter_a_json.get('issue_description', '')} | "
-        f"{user_causes_text} | - | - | - |"
+        f"{user_causes_text} | - | - | - | - | - | - | "
     )
     rows = []
     for item in unique_similar_answers:
@@ -150,7 +150,7 @@ def build_similarity_md(unique_similar_answers, filter_a_json, my_jira):
             continue
         merge_urls_text = ""
         try:
-            all_urls, merge_urls = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
+            all_urls, merge_urls, released_patches, unreleased_patches = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
             if merge_urls:
                 merge_urls_text = "；".join(merge_urls)
             else:
@@ -159,11 +159,20 @@ def build_similarity_md(unique_similar_answers, filter_a_json, my_jira):
                 all_urls_text = "；".join(all_urls)
             else:
                 all_urls_text = "无"
+            if released_patches:
+                released_patches_text = "；".join(released_patches)
+            else:
+                released_patches_text = "无"
+            if unreleased_patches:
+                unreleased_patches_text = "；".join(unreleased_patches)
+            else:
+                unreleased_patches_text = "无"
+            
         except Exception as exc:
             mylog(f"collect_patch_urls failed for {similar_jira_id}: {exc}")
         row = (
             f"| {similar_jira_id} | {item_data.get('issue_description', '')} | "
-            f"{problem_causes_text} | {score:.2f} | {desc} | {all_urls_text} | {merge_urls_text} | "
+            f"{problem_causes_text} | {score:.2f} | {desc} | {all_urls_text} | {merge_urls_text} | {released_patches_text} | {unreleased_patches_text} "
         )
         rows.append((score, row))
     rows.sort(key=lambda x: x[0], reverse=True)

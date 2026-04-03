@@ -166,6 +166,15 @@ class MyJira:
         issues = self.search_issues(jql, maxResults=maxResults)
         return len(issues)
     
+    def getLabels(self, issue_key):
+        try:
+            issue = self.mJira.issue(issue_key, expand="labels")
+        except Exception:
+            return []
+
+        labels = getattr(getattr(issue, "fields", None), "labels", None) or []
+        return labels
+
     def getLabelAppliedTime(self, issue_key, label):
         issue = self.mJira.issue(issue_key, expand="changelog")
         histories = getattr(getattr(issue, "changelog", None), "histories", [])
@@ -439,10 +448,12 @@ class MyJira:
 
 def main():
     my_jira = MyJira("https://jira.amlogic.com", "lingzhi.bi", "Qwer!23456")
-    project_id = my_jira.getProjectId("OTT-92553")
-    print(project_id)
-    SoftwareRelease = my_jira.getSoftwareRelease("OTT-92553")
-    print(SoftwareRelease)
+    labels = my_jira.getLabels("SWPL-220717")
+    print(labels)
+    # project_id = my_jira.getProjectId("OTT-92553")
+    # print(project_id)
+    # SoftwareRelease = my_jira.getSoftwareRelease("OTT-92553")
+    # print(SoftwareRelease)
     # comments = my_jira.getComments("OTT-92107")
     # print(comments)
     # description = my_jira.getDescription("OTT-92107")
