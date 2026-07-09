@@ -4,8 +4,8 @@ import sys
 import json
 import fastapi
 # fastapi 启动方式：
-# cd /home/amlogic/FAE/AutoLog/lingzhi.bi/find_similar_jira/utils
-# nohup uvicorn gerrit_info:app --host 0.0.0.0 --port 1234 > uvicorn_gerrit_info.log 2>&1 &
+# cd /home/amlogic/FAE/AutoLog/lingzhi.bi/find_similar_jira
+# nohup uvicorn utils.gerrit_info:app --host 0.0.0.0 --port 1234 > uvicorn_gerrit_info.log 2>&1 &
 app = fastapi.FastAPI()
 
 class GerritClient:
@@ -61,7 +61,7 @@ class GerritClient:
 
 import os
 JIRA_USERNAME = os.environ.get("JIRA_BLZ_USERNAME", "") or os.environ.get("JIRA_USERNAME", "")
-JJIRA_PASSWORD = os.environ.get("JIRA_BLZ_PASSWORD", "") or os.environ.get("JIRA_PASSWORD", "")
+JIRA_PASSWORD = os.environ.get("JIRA_BLZ_PASSWORD", "") or os.environ.get("JIRA_PASSWORD", "")
 if not JIRA_PASSWORD or not JIRA_USERNAME:
     raise ValueError("JIRA_PASSWORD or JIRA_USERNAME is not set")
 
