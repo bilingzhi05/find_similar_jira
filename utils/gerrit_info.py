@@ -5,7 +5,7 @@ import json
 import fastapi
 # fastapi 启动方式：
 # cd /home/amlogic/FAE/AutoLog/lingzhi.bi/find_similar_jira/utils
-# nohup uvicorn gerrit_info:app --host 0.0.0.0 --port 1236 > uvicorn_gerrit_info.log 2>&1 &
+# nohup uvicorn gerrit_info:app --host 0.0.0.0 --port 1234 > uvicorn_gerrit_info.log 2>&1 &
 app = fastapi.FastAPI()
 
 class GerritClient:
@@ -59,11 +59,18 @@ class GerritClient:
         resp = self._request(f"/a/changes/{change_id}/detail", params=base_params)
         return self._handle_response(resp)
 
+import os
+JIRA_USERNAME = os.environ.get("JIRA_BLZ_USERNAME", "") or os.environ.get("JIRA_USERNAME", "")
+JJIRA_PASSWORD = os.environ.get("JIRA_BLZ_PASSWORD", "") or os.environ.get("JIRA_PASSWORD", "")
+if not JIRA_PASSWORD or not JIRA_USERNAME:
+    raise ValueError("JIRA_PASSWORD or JIRA_USERNAME is not set")
+
+
 
 class GerritService:
-    def __init__(self, user: str = "lingzhi.bi", 
+    def __init__(self, user: str = JIRA_USERNAME, 
     source_repo_pw: str = "We/jHb0eSZT+yTxGnhs722PF7EJy+81O1x8cK+tXnQ", 
-    aml_code_master_pw: str = "Qwer!23456", 
+    aml_code_master_pw: str = JIRA_PASSWORD, 
     scgit_pw: str = "IeAO/9jzeYjsZVOrBr8AI6qqRO4K3mNNqXPI8OerhQ"):
         self.source_client = GerritClient(
             "https://source.amlogic.com",

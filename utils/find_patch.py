@@ -377,8 +377,22 @@ def check_release_patch(search_type, change_id: str, verbose=False):
 #     print(f'错误：{result["error"]}')
 @app.get("/collect_patch_urls")
 def collect_patch_urls_api(similar_jira_id: str, user_jira_id: str):
-    my_jira = MyJira("https://jira.amlogic.com", "lingzhi.bi", "Qwer!23456")
-    all_urls, merge_urls, released_patches, unreleased_patches = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
+    import os
+    try:
+        JIRA_BLZ_PASSWORD = os.environ.get("JIRA_BLZ_PASSWORD", "") or os.environ.get("JIRA_PASSWORD", "")
+        JIRA_BLZ_USERNAME = os.environ.get("JIRA_BLZ_USERNAME", "") or os.environ.get("JIRA_USERNAME", "")
+        if not JIRA_BLZ_PASSWORD or not JIRA_BLZ_USERNAME:
+            raise ValueError("JIRA_BLZ_PASSWORD or JIRA_BLZ_USERNAME is not set")
+        my_jira = MyJira("https://jira.amlogic.com", JIRA_BLZ_USERNAME, JIRA_BLZ_PASSWORD)
+        all_urls, merge_urls, released_patches, unreleased_patches = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
+    except Exception as e:
+        mylog(f"[WARNING] collect_patch_urls failed: jira={similar_jira_id} user={user_jira_id} err={e}",)
+        return {
+            "all_urls": [],
+            "merge_urls": [],
+            "released_patches": [],
+            "unreleased_patches": [],
+        }
     mylog(f"all_urls: {all_urls}")
     mylog(f"merge_urls: {merge_urls}")
     mylog(f"released_patches: {released_patches}")
@@ -402,7 +416,7 @@ if __name__ == "__main__":
     # else:
     #     print(f'错误：{result["error"]}')
     
-    my_jira = MyJira("https://jira.amlogic.com", "lingzhi.bi", "Qwer!23456")
+    my_jira = MyJira("https://jira.amlogic.com", "lingzhi.bi", "Qwer!234567")
     similar_jira_id = "SWPL-245576"
     user_jira_id = "OTT-85767" # 有没有合入这个项目的分支
     all_urls, merge_urls, released_patches, unreleased_patches = collect_patch_urls(similar_jira_id, user_jira_id, my_jira)
